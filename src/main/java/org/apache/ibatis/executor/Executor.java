@@ -28,6 +28,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 执行器, 在mybatis中真正执行sql的组件
+ *
  * @author Clinton Begin
  */
 public interface Executor {

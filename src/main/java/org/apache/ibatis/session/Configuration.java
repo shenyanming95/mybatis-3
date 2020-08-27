@@ -96,37 +96,88 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * mybatis的全局配置类, 可以到官网查看：https://mybatis.org/mybatis-3/configuration.html
+ *
  * @author Clinton Begin
  */
 public class Configuration {
 
   protected Environment environment;
 
+  // 允许在嵌套语句中使用分页（RowBounds）。如果允许使用则设置为 false
   protected boolean safeRowBoundsEnabled;
+
+  // 允许在嵌套语句上使用ResultHandler。如果允许，设置为false
   protected boolean safeResultHandlerEnabled = true;
+
+  // 是否开启自动驼峰命名规则（camel case）映射
   protected boolean mapUnderscoreToCamelCase;
+
+  // 启用后，任何方法调用都将加载对象的所有惰性属性。否则，将按需加载每个属性, 与 lazyLoadTriggerMethods 有关
   protected boolean aggressiveLazyLoading;
+
+  // 允许或禁止从单个语句返回多个ResultSet（需要兼容的驱动程序）
   protected boolean multipleResultSetsEnabled = true;
+
+  // 允许 JDBC 支持自动生成主键，需要驱动支持. 如果设置为 true 则这个设置强制使用自动生成主键，尽管一些驱动不能支持但仍可正常工作（比如 Derby）。
   protected boolean useGeneratedKeys;
+
+  // 使用列标签代替列名, 不同的驱动在这方面会有不同的表现，
   protected boolean useColumnLabel = true;
+
+  // 全局地开启或关闭配置文件中的所有映射器已经配置的任何缓存
   protected boolean cacheEnabled = true;
+
+  // 指定在检索到的值为null时是否将调用setter或map的put方法, 当依赖Map.keySet()或空值初始化时，此功能很有用。注意诸如（int，boolean等）的原语不会设置为null
   protected boolean callSettersOnNulls;
+
+  // 允许使用方法签名中声明的实际名称引用语句参数。要使用此功能，必须使用-parameters选项在Java 8中进行编译
   protected boolean useActualParamName = true;
+
+  // 默认情况下，当返回行的所有列均为NULL时，MyBatis返回NULL，启用此设置后，MyBatis会返回一个空实例。 请注意，它也适用于嵌套结果（即collectioin和关联）
   protected boolean returnInstanceForEmptyRow;
+
+  // 从SQL中删除多余的空白字符。这也会影响SQL中的文字字符串
   protected boolean shrinkWhitespacesInSql;
 
+  // 指定MyBatis将添加到记录器名称的前缀字符串
   protected String logPrefix;
+
+  // 指定MyBatis应该使用哪种日志记录实现。如果不存在此设置，则将自动发现日志记录实现
   protected Class<? extends Log> logImpl;
+
+  // 指定VFS实现
   protected Class<? extends VFS> vfsImpl;
+
   protected Class<?> defaultSqlProviderType;
+
+  // 本地缓存机制（Local Cache）防止循环引用（circular references）和加速重复嵌套查询。
+  // 默认值为 SESSION，这种情况下会缓存一个会话中执行的所有查询。
+  // 若设置值为 STATEMENT，本地会话仅用在语句执行上，对相同 SqlSession 的不同调用将不会共享数据
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
+
+  // 当没有为参数提供特定的 JDBC 类型时，为空值指定 JDBC 类型。 某些驱动需要指定列的 JDBC 类型，多数情况直接用一般类型即可，比如 NULL、VARCHAR 或 OTHER
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
+
+  // 指定哪个对象的方法触发一次延迟加载
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
+
+  // 设置超时时间，它决定驱动等待数据库响应的秒数
   protected Integer defaultStatementTimeout;
+
+  // 为驱动的结果集获取数量（fetchSize）设置一个提示值。此参数只可以在查询设置中被覆盖
   protected Integer defaultFetchSize;
+
+  // 根据语句设置省略滚动策略时指定
   protected ResultSetType defaultResultSetType;
+
+  // 配置默认的执行器
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+
+  // 指定 MyBatis 应如何自动映射列到字段或属性
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
+
+  // 指定发现自动映射目标未知列（或者未知属性类型）的行为
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
   protected Properties variables = new Properties();
@@ -134,19 +185,25 @@ public class Configuration {
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
+  // 延迟加载的全局开关。当开启时，所有关联对象都会延迟加载。 特定关联关系中可通过设置 fetchType 属性来覆盖该项的开关状态
   protected boolean lazyLoadingEnabled = false;
+
+  // 指定MyBatis将用于创建支持延迟加载的对象的代理工具
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
   protected String databaseId;
   /**
-   * Configuration factory class.
-   * Used to create Configuration for loading deserialized unread properties.
+   * 指定提供Configuration实例的类。返回的Configuration实例用于加载反序列化对象的惰性属性,
+   * 此类必须具有带有签名静态Configuration getConfiguration()的方法
    *
    * @see <a href='https://code.google.com/p/mybatis/issues/detail?id=300'>Issue 300 (google code)</a>
    */
   protected Class<?> configurationFactory;
 
+  // 保存Mapper接口或者Mapper.xml
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+
+  // 保存所有插件的一个链(集合)
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry(this);
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
@@ -665,17 +722,23 @@ public class Configuration {
   }
 
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    // 保证一定会有一个执行器类型 ExecutorType.SIMPLE
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
+    // 不同的执行器类型, 创建不同的执行器
     if (ExecutorType.BATCH == executorType) {
+      // 如果批量操作, 则创建BatchExecutor对象, this指的是Configuration
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      // 如果是重用类型, 则创建ReuseExecutor对象, this指的是Configuration
       executor = new ReuseExecutor(this, transaction);
     } else {
+      // 其它情况都只创建SimpleExecutor对象, this指的是Configuration
       executor = new SimpleExecutor(this, transaction);
     }
     if (cacheEnabled) {
+      // 若允许缓存, 还会使用装饰者模式, 创建一个带有缓存效果的执行器
       executor = new CachingExecutor(executor);
     }
     executor = (Executor) interceptorChain.pluginAll(executor);

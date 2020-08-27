@@ -28,7 +28,7 @@ import org.apache.ibatis.mapping.MappedStatement;
 public enum AutoMappingUnknownColumnBehavior {
 
   /**
-   * Do nothing (Default).
+   * Do nothing (Default), 不做任何反应
    */
   NONE {
     @Override
@@ -38,7 +38,7 @@ public enum AutoMappingUnknownColumnBehavior {
   },
 
   /**
-   * Output warning log.
+   * Output warning log, 输出提醒日志
    * Note: The log level of {@code 'org.apache.ibatis.session.AutoMappingUnknownColumnBehavior'} must be set to {@code WARN}.
    */
   WARNING {
@@ -49,7 +49,7 @@ public enum AutoMappingUnknownColumnBehavior {
   },
 
   /**
-   * Fail mapping.
+   * Fail mapping, 映射失败
    * Note: throw {@link SqlSessionException}.
    */
   FAILING {

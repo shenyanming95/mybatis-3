@@ -21,6 +21,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
+ * 每当MyBatis在PreparedStatement上设置参数或从ResultSet检索值时,
+ * 都会使用TypeHandler以适合Java类型的方式检索值
+ *
  * @author Clinton Begin
  */
 public interface TypeHandler<T> {

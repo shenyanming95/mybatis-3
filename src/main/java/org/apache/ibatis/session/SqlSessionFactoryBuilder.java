@@ -26,7 +26,9 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 
 /**
- * Builds {@link SqlSession} instances.
+ * 使用{@link SqlSessionFactoryBuilder}读取sqlMapConfig.xml, 获取到
+ * 一个{@link SqlSessionFactory}对象, 用它来管理{@link SqlSession},
+ * 可以说, 这是整个框架运行的起点.
  *
  * @author Clinton Begin
  */
@@ -88,6 +90,11 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  /**
+   * 最终都是通过将配置文件解析成{@link Configuration}, 然后创建返回一个{@link DefaultSqlSessionFactory}
+   * @param config
+   * @return
+   */
   public SqlSessionFactory build(Configuration config) {
     return new DefaultSqlSessionFactory(config);
   }
