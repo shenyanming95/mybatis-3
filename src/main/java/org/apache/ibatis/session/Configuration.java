@@ -712,7 +712,10 @@ public class Configuration {
   }
 
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // 调用RoutingStatementHandler的构造方法, 它会按照MappedStatement类型, 创建不同的
+    // StatementHandler实例, 然后将其包裹起来.源码在下方..
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    // 用配置的插件修改这个StatementHandler
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -741,6 +744,8 @@ public class Configuration {
       // 若允许缓存, 还会使用装饰者模式, 创建一个带有缓存效果的执行器
       executor = new CachingExecutor(executor);
     }
+    // 用插件Interceptor去装饰执行器后返回, 很多插件例如PageHelp就会在这里返回执行器的代理对象, 进而改变
+    // 调用流程
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

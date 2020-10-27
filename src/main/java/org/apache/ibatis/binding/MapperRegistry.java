@@ -34,6 +34,8 @@ import org.apache.ibatis.session.SqlSession;
 public class MapperRegistry {
 
   private final Configuration config;
+  // Mapper接口就是保存在这里
+  // 这部分会在解析xml中就已知晓, 所以mybatis这里用的是hashMap而不是concurrentHashMap
   private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();
 
   public MapperRegistry(Configuration config) {
@@ -42,11 +44,15 @@ public class MapperRegistry {
 
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    // 先从缓存中knownMappers获取是否有这个Class类型的Mapper代理工厂
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
+    // 如果格式定义正确, 在xml解析中就可以知道MapperProxyFactory; 如果配置失败或者压根就
+    // 没有这个Mapper接口, 则抛出异常BindingException
     if (mapperProxyFactory == null) {
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
+      // 调用mapperProxyFactory的newInstance()方法, 传入SqlSession对象
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);

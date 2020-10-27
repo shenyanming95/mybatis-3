@@ -79,6 +79,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
+      // 因为JDK动态代理还会处理Object类的方法, 所以这边遇到这种情况, 直接回调原方法
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
       } else {

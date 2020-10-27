@@ -28,7 +28,9 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class MapperProxyFactory<T> {
 
+  // 相对应的Mapper接口的Class类型
   private final Class<T> mapperInterface;
+  // Mapper接口内部的方法缓存, 提高反射效率吧. 它和后面的MapperProxy的方法缓存是同一对象
   private final Map<Method, MapperMethodInvoker> methodCache = new ConcurrentHashMap<>();
 
   public MapperProxyFactory(Class<T> mapperInterface) {
@@ -45,11 +47,17 @@ public class MapperProxyFactory<T> {
 
   @SuppressWarnings("unchecked")
   protected T newInstance(MapperProxy<T> mapperProxy) {
+    // 方法很简单, 就是JDK的动态代理API调用, 需要注意的是InvocationHandler就是上面提及的
+    // MapperProxy对象, 到这步时Mapper接口代理已经创建完成.
     return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
   }
 
   public T newInstance(SqlSession sqlSession) {
+    // 创建MapperProxy实例, 会传入SqlSession、Mapper接口Class对象和该接口的方法缓存;
+    // MapperProxy实现了java.lang.reflect.InvocationHandler, 就是JDK反射的处理接口.
+    // 所以也可以猜到对Mapper接口方法的调用, 最后会转到MapperProxy的invoke()方法上.
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
+    // 调用重载的newInstance(MapperProxy)方法
     return newInstance(mapperProxy);
   }
 

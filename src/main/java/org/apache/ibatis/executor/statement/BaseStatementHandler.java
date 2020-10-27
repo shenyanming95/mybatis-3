@@ -51,6 +51,7 @@ public abstract class BaseStatementHandler implements StatementHandler {
   protected BoundSql boundSql;
 
   protected BaseStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // 一堆组件赋值
     this.configuration = mappedStatement.getConfiguration();
     this.executor = executor;
     this.mappedStatement = mappedStatement;
@@ -59,14 +60,17 @@ public abstract class BaseStatementHandler implements StatementHandler {
     this.typeHandlerRegistry = configuration.getTypeHandlerRegistry();
     this.objectFactory = configuration.getObjectFactory();
 
-    if (boundSql == null) { // issue #435, get the key before calculating the statement
+    // issue #435, get the key before calculating the statement
+    if (boundSql == null) {
+      // 若boundSql为空, 先创建
       generateKeys(parameterObject);
       boundSql = mappedStatement.getBoundSql(parameterObject);
     }
 
     this.boundSql = boundSql;
-
+    // 创建ParameterHandler, 并且用拦截器去渲染它, 获取代理对象
     this.parameterHandler = configuration.newParameterHandler(mappedStatement, parameterObject, boundSql);
+    // 创建ResultSetHandler, 并且用拦截器去渲染它, 获取代理对象
     this.resultSetHandler = configuration.newResultSetHandler(executor, mappedStatement, rowBounds, parameterHandler, resultHandler, boundSql);
   }
 

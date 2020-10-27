@@ -29,6 +29,8 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * MyBatis每个<select>、<update>...标签对应一个{@link MappedStatement}对象
+ *
  * @author Clinton Begin
  */
 public final class MappedStatement {
@@ -302,13 +304,17 @@ public final class MappedStatement {
   }
 
   public BoundSql getBoundSql(Object parameterObject) {
+    // 通过当前MappedStatement的SqlSource获取BoundSql对象, 内部就是new一个BoundSql
+    // 对象实例, 将属性值赋值进去而已.这个BoundSql里面保存了我们写的SQL语句、参数映射
+    // ParameterMapping和实际参数值parameterObject
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+    // 如果没有参数映射(即SQL没有查询条件), 创建一个没有参数映射的BoundSql
     if (parameterMappings == null || parameterMappings.isEmpty()) {
       boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
     }
 
-    // check for nested result maps in parameter mappings (issue #30)
+    // 这边检查当前的SQL标签, 是否有配置嵌套的ResultMap
     for (ParameterMapping pm : boundSql.getParameterMappings()) {
       String rmId = pm.getResultMapId();
       if (rmId != null) {

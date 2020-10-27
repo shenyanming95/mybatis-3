@@ -38,11 +38,18 @@ public class RoutingStatementHandler implements StatementHandler {
 
   public RoutingStatementHandler(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
 
+    // 根据StatementType, 创建不同的StatementHandler. StatementType总共有3种：
+    // STATEMENT, PREPARED, CALLABLE, 对应JDBC的Statement的不同操作；mybatis提供
+    // 的这些StatementHandler实现都继承自BaseStatementHandler
     switch (ms.getStatementType()) {
       case STATEMENT:
         delegate = new SimpleStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);
         break;
       case PREPARED:
+        // 因为这里的SQL用了“#{}”, 而mybatis会将这种表达式解析为“?”, 用预编译的
+        // 方式执行sql, 所以mybatis会创建PreparedStatementHandler.其实不管在创建
+        // 哪一个StatementHandler的具体实现, 都会调用抽象父类BaseStatementHandler的
+        // 构造方法, 里面会创建2个重要的对象：ParameterHandler和ResultSetHandler
         delegate = new PreparedStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);
         break;
       case CALLABLE:

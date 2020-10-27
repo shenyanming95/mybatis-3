@@ -92,10 +92,10 @@ public class SqlSessionFactoryBuilder {
 
   /**
    * 最终都是通过将配置文件解析成{@link Configuration}, 然后创建返回一个{@link DefaultSqlSessionFactory}
-   * @param config
-   * @return
    */
   public SqlSessionFactory build(Configuration config) {
+    // 参数config就是解析xml获取到的对象, 通过它来实例化DefaultSqlSessionFactory,
+    // 这步执行完, 我们就可以获取到一个SqlSessionFactory实例
     return new DefaultSqlSessionFactory(config);
   }
 

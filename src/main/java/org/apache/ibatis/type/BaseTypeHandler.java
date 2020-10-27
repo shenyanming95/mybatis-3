@@ -24,12 +24,7 @@ import org.apache.ibatis.executor.result.ResultMapException;
 import org.apache.ibatis.session.Configuration;
 
 /**
- * The base {@link TypeHandler} for references a generic type.
- * <p>
- * Important: Since 3.5.0, This class never call the {@link ResultSet#wasNull()} and
- * {@link CallableStatement#wasNull()} method for handling the SQL {@code NULL} value.
- * In other words, {@code null} value handling should be performed on subclass.
- * </p>
+ * {@link TypeHandler}的抽象父类, 基本上每一种JDBC类型, 都会通过它的实现类来完成java类型的映射
  *
  * @author Clinton Begin
  * @author Simone Tripodi
@@ -46,8 +41,7 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
   /**
    * Sets the configuration.
    *
-   * @param c
-   *          the new configuration
+   * @param c the new configuration
    * @deprecated Since 3.5.0 - See https://github.com/mybatis/mybatis-3/issues/1203. This property will remove future.
    */
   @Deprecated
@@ -108,17 +102,6 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
 
   public abstract void setNonNullParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;
 
-  /**
-   * Gets the nullable result.
-   *
-   * @param rs
-   *          the rs
-   * @param columnName
-   *          Colunm name, when configuration <code>useColumnLabel</code> is <code>false</code>
-   * @return the nullable result
-   * @throws SQLException
-   *           the SQL exception
-   */
   public abstract T getNullableResult(ResultSet rs, String columnName) throws SQLException;
 
   public abstract T getNullableResult(ResultSet rs, int columnIndex) throws SQLException;

@@ -132,18 +132,26 @@ public class DefaultSqlSession implements SqlSession {
 
   @Override
   public <E> List<E> selectList(String statement) {
+    // 原生mybatis使用, 这个statement就是mapper.xml的命名空间+sql标签的Id. 如果是注解
+    // 则是类全名 + 方法名, 然后调用下面的重载方法
     return this.selectList(statement, null);
   }
 
   @Override
   public <E> List<E> selectList(String statement, Object parameter) {
+    // 这边就多了一个分页组件RowBounds的创建, 继续调用下面的重载方法
     return this.selectList(statement, parameter, RowBounds.DEFAULT);
   }
 
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
+      // 通过Configuration的成员变量mappedStatements(类型为StrictMap)获取对应的
+      // MappedStatement对象(每一份SQL, mybatis都会定义一个MappedStatement)
       MappedStatement ms = configuration.getMappedStatement(statement);
+      // wrapCollection()包裹类型是集合或数组的参数, mybatis会重新创建一个Map去包裹参数值;
+      // 如果参数非集合非数组, 参数值就直接返回. 然后通过上一步创建的Executor来执行SQL.
+      // 这边还会传入一个Executor.NO_RESULT_HANDLER, 默认为null
       return executor.query(ms, wrapCollection(parameter), rowBounds, Executor.NO_RESULT_HANDLER);
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
@@ -288,6 +296,7 @@ public class DefaultSqlSession implements SqlSession {
 
   @Override
   public <T> T getMapper(Class<T> type) {
+    // this表示当前SqlSession实例, 即DefaultSqlSession
     return configuration.getMapper(type, this);
   }
 

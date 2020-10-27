@@ -46,7 +46,8 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
     @Override
     public SqlSession openSession() {
-        // 默认使用的执行器是Simple
+        // 实际调用openSessionFromDataSource()方法创建, 这边的ExecutorType为
+        // ExecutorType.SIMPLE；
         return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
     }
 
@@ -100,6 +101,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
         Transaction tx = null;
         try {
+            // 获取在sqlMapConfig.xml配置的Environment信息
             final Environment environment = configuration.getEnvironment();
             // 通过Environment.getTransactionFactory()获取事务工厂, 默认为
             // JdbcTransactionFactory；最后通过事务工厂new一个事务, 默认为JdbcTransaction

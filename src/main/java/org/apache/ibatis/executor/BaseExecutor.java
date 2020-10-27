@@ -51,15 +51,26 @@ public abstract class BaseExecutor implements Executor {
 
     private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+    // 事务相关
     protected Transaction transaction;
+
+    // 包裹的执行器, 是底层执行sql的执行器
     protected Executor wrapper;
 
+    // 延迟加载队列
     protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+
+    // 基于HashMap实现的缓存
     protected PerpetualCache localCache;
     protected PerpetualCache localOutputParameterCache;
+
+    // 全局的配置类
     protected Configuration configuration;
 
+    // 查询栈
     protected int queryStack;
+
+    // 标识是否关闭
     private boolean closed;
 
     protected BaseExecutor(Configuration configuration, Transaction transaction) {
@@ -91,7 +102,6 @@ public abstract class BaseExecutor implements Executor {
                 }
             }
         } catch (SQLException e) {
-            // Ignore. There's nothing that can be done at this point.
             log.warn("Unexpected exception on closing transaction.  Cause: " + e);
         } finally {
             transaction = null;
@@ -143,27 +153,40 @@ public abstract class BaseExecutor implements Executor {
         if (closed) {
             throw new ExecutorException("Executor was closed.");
         }
+        // 如果 queryStack 为零, 并且要求清空本地缓存, 例如：<select flushCache="true">
+        // 那么就把一级缓存清空.
         if (queryStack == 0 && ms.isFlushCacheRequired()) {
             clearLocalCache();
         }
         List<E> list;
         try {
+            // queryStack是BaseExecutor的一个成员变量, 未加任何修饰, 默认值为0
+            // 提醒：每个SqlSession有各自的Executor, 不同SqlSession互不影响.
             queryStack++;
+            // localCache是BaseExecutor的成员变量, 类型为：PerpetualCache. 它实际上就是mybatis
+            // 的一级缓存, sqlSession级别. 如果resultHandler为空, 先从一级缓存中取值, 否则为null
             list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
             if (list != null) {
+                // 一级缓存中取到值, 是处理存储过程的情况, 这里忽略掉.
                 handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
             } else {
+                // 一级缓存未取到值, 查询数据库, 转到queryFromDatabase()
                 list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
             }
         } finally {
+            // 查询栈减1
             queryStack--;
         }
         if (queryStack == 0) {
+            // 遍历所有DeferredLoad, 执行延迟加载
             for (DeferredLoad deferredLoad : deferredLoads) {
                 deferredLoad.load();
             }
             // issue #601
+            // 清空队列
             deferredLoads.clear();
+            // 如果缓存级别为SQL语句级别, 则清空本地缓存.
+            // 缓存级别只有两种：SESSION(会话级)、STATEMENT(SQL语句级别)
             if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
                 // issue #482
                 clearLocalCache();
@@ -249,7 +272,9 @@ public abstract class BaseExecutor implements Executor {
     public void rollback(boolean required) throws SQLException {
         if (!closed) {
             try {
+                // 清空缓存
                 clearLocalCache();
+                //
                 flushStatements(true);
             } finally {
                 if (required) {
@@ -320,13 +345,18 @@ public abstract class BaseExecutor implements Executor {
 
     private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
         List<E> list;
+        // 先在缓存中添加此缓存键CacheKey, 这一步是与延迟加载有关的
         localCache.putObject(key, EXECUTION_PLACEHOLDER);
         try {
+            // 真正执行查询, 有没有发现这些框架都有一个do..()的方法, 表示真正执行的意思...
             list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
         } finally {
+            // 将上一步的占位对象EXECUTION_PLACEHOLDER清空掉.
             localCache.removeObject(key);
         }
+        // 将查询结果保存到一级缓存中
         localCache.putObject(key, list);
+        // 暂时忽略，存储过程相关
         if (ms.getStatementType() == StatementType.CALLABLE) {
             localOutputParameterCache.putObject(key, parameter);
         }

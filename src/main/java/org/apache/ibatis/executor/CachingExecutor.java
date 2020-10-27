@@ -84,19 +84,27 @@ public class CachingExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    // 从MappedStatement中获取绑定的SQL语句, 为其附上参数值, 转到getBoundSql()
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    // 通过MappedStatement的id①、分页RowBounds的值②、待执行的sql③、执行sql的参数值④
+    // 和当前环境Environment的id⑤. 将这些值保存到CacheKey对象内并且计算它们hash值总和.
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
+    // 调用当前类的重载方法, 转到query()
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    // 从MappedStatement中获取缓存Cache, 这个缓存就是Mybatis的二级缓存
     Cache cache = ms.getCache();
     if (cache != null) {
       flushCacheIfRequired(ms);
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
+        // 若二级缓存Cache存在当前缓存键CacheKey, 则直接取值;
+        // 若没有则调用CachingExecutor的包装的执行器即BaseExecutor来查询..
+        // 这个tcm就是TransactionalCacheManager, 里面管理着多个缓存Cache
         @SuppressWarnings("unchecked")
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
@@ -106,6 +114,7 @@ public class CachingExecutor implements Executor {
         return list;
       }
     }
+    // 如果mapper.xml本身就没有开启二级缓存, 则直接查询, 调用包装的Executor来查询
     return delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
